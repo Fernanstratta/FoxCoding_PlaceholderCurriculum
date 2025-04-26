@@ -1,12 +1,45 @@
+"use client"
+
 import Image from "next/image"
 import { Mail, Phone, MapPin, Linkedin, Github, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { createClient } from "@/lib/client"
 import { Navbar } from "@/components/navbar"
+import { useState, useEffect } from "react"
+
+type Proyecto = {
+  id: string
+  title: string
+  summary: string
+  description: string
+  technologies: string[]
+  orderNumber: number
+}
 
 export default function CurriculumPage() {
+  const supabase = createClient()
+  const [proyectos, setProyectos] = useState<Proyecto[]>([])
+
+  useEffect(() => {
+    const fetchProyectos = async () => {
+      const { data, error } = await supabase
+        .from('proyectos')
+        .select('*')
+        .order('order_number', { ascending: true })
+
+      if (error) {
+        console.error('Error al obtener proyectos:', error)
+      } else {
+        setProyectos(data as Proyecto[])
+      }
+    }
+
+    fetchProyectos()
+  }, [])
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
@@ -220,11 +253,27 @@ export default function CurriculumPage() {
           </div>
         </section>
 
-        {/* Proyectos */}
         <section id="proyectos" className="mb-10 scroll-mt-20">
           <h2 className="text-2xl font-bold mb-6">Proyectos Destacados</h2>
 
           <div className="space-y-6">
+            {proyectos?.map((proyecto) => (
+              <Card key={proyecto.id}>
+                <CardContent className="pt-6">
+                  <h3 className="text-xl font-semibold">{proyecto.title}</h3>
+                  <p className="text-muted-foreground mb-3">{proyecto.summary}</p>
+                  <p className="text-muted-foreground mb-3">{proyecto.description}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {proyecto.technologies?.map((tech, idx) => (
+                      <Badge key={idx} variant="outline">{tech}</Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="space-y-6 mt-10">
             <Card>
               <CardContent className="pt-6">
                 <h3 className="text-xl font-semibold">Plataforma de E-learning</h3>
@@ -260,43 +309,7 @@ export default function CurriculumPage() {
             </Card>
           </div>
         </section>
-
-        <section id="certificaciones" className="scroll-mt-20">
-          <h2 className="text-2xl font-bold mb-6">Certificaciones</h2>
-
-          <div className="space-y-4">
-            <div className="flex flex-col md:flex-row md:justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">AWS Certified Developer - Associate</h3>
-                <p className="text-muted-foreground">Amazon Web Services</p>
-              </div>
-              <div className="text-muted-foreground text-sm">2022</div>
-            </div>
-
-            <div className="flex flex-col md:flex-row md:justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Professional Scrum Master I (PSM I)</h3>
-                <p className="text-muted-foreground">Scrum.org</p>
-              </div>
-              <div className="text-muted-foreground text-sm">2021</div>
-            </div>
-
-            <div className="flex flex-col md:flex-row md:justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">MongoDB Certified Developer</h3>
-                <p className="text-muted-foreground">MongoDB University</p>
-              </div>
-              <div className="text-muted-foreground text-sm">2020</div>
-            </div>
-          </div>
-        </section>
       </main>
-
-      <footer className="border-t py-6">
-        <div className="container mx-auto px-4 text-center text-muted-foreground text-sm">
-          <p>© {new Date().getFullYear()} Nombre Apellido. Todos los derechos reservados.</p>
-        </div>
-      </footer>
     </div>
   )
 }
